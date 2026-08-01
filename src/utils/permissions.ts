@@ -1,5 +1,39 @@
 import { PermissionEnumType } from "@/__generated__/graphql";
 
-export const PERMISSIONS = Object.values(PermissionEnumType);
+export const PLATFORM_PERMISSIONS = [
+  PermissionEnumType.UserView,
+  PermissionEnumType.UserCreate,
+  PermissionEnumType.UserUpdate,
+  PermissionEnumType.UserDelete,
+  PermissionEnumType.RoleView,
+  PermissionEnumType.RoleManage,
+  PermissionEnumType.SessionManage,
+  PermissionEnumType.AuditLogView,
+] as const;
 
-export type Permission = PermissionEnumType;
+/** Project/task/member flags — extend generated enum after codegen. */
+export const PROJECT_PERMISSIONS = ["PROJECT_CREATE", "PROJECT_DELETE", "PROJECT_EDIT"] as const;
+
+export const TASK_PERMISSIONS = [
+  "TASK_CREATE",
+  "TASK_EDIT_OWN",
+  "TASK_EDIT_ANY",
+  "TASK_DELETE",
+  "TASK_ASSIGN",
+  "TASK_CHANGE_STATUS",
+] as const;
+
+export const MEMBER_PERMISSIONS = ["MEMBER_INVITE", "MEMBER_REMOVE", "MEMBER_MANAGE_ROLES"] as const;
+
+export const PERMISSIONS = [
+  ...PLATFORM_PERMISSIONS,
+  ...PROJECT_PERMISSIONS,
+  ...TASK_PERMISSIONS,
+  ...MEMBER_PERMISSIONS,
+] as const;
+
+export type Permission = (typeof PERMISSIONS)[number];
+
+export function isPlatformPermission(permission: Permission): permission is (typeof PLATFORM_PERMISSIONS)[number] {
+  return (PLATFORM_PERMISSIONS as readonly string[]).includes(permission);
+}

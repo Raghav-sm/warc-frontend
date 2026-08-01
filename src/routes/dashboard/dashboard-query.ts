@@ -1,3 +1,5 @@
+import type { DocumentNode } from "graphql";
+
 import { gql } from "@/__generated__";
 
 export const DASHBOARD_QUERY = gql(`
@@ -19,6 +21,23 @@ export const DASHBOARD_QUERY = gql(`
         isActive
         createdAt
       }
+      projectCards {
+        id
+        name
+        status
+        progressPercent
+        memberCount
+      }
+      myTasks {
+        id
+        title
+        projectId
+        projectName
+        status
+        progress
+        priority
+        dueDate
+      }
     }
   }
-`);
+`) as DocumentNode;

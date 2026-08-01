@@ -3,6 +3,8 @@ import { parseAsString, useQueryStates } from "nuqs";
 import { useMemo } from "react";
 import { useNavigate } from "react-router";
 import { gql } from "@/__generated__";
+
+import { useAuth } from "@/components/AuthProvider";
 import { DataTable } from "@/components/DataTable";
 import { DataTableSkeleton } from "@/components/DataTableSkeleton";
 import { ErrorAlert } from "@/components/ErrorAlert";
@@ -41,6 +43,8 @@ const filterParsers = {
 };
 
 export default function RolesAndAssignments() {
+  const { hasAllPermissions } = useAuth();
+  const canManageRoles = hasAllPermissions("ROLE_MANAGE");
   const navigate = useNavigate();
   const [queryState, setQueryState] = useQueryStates(filterParsers);
 
@@ -134,7 +138,7 @@ export default function RolesAndAssignments() {
             </Button>
           )}
         </div>
-        <CreateRoleDialogButton />
+        {canManageRoles ? <CreateRoleDialogButton /> : null}
       </div>
       {renderContent()}
     </Layout>

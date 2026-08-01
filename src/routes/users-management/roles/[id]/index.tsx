@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import z from "zod";
 import { gql } from "@/__generated__";
 import { PermissionEnumType } from "@/__generated__/graphql";
+import { useAuth } from "@/components/AuthProvider";
 import { ErrorAlert } from "@/components/ErrorAlert";
 import { FormPanelWithReadMode } from "@/components/Form";
 import { DetailFormSkeleton } from "@/components/FormSkeletons";
@@ -77,6 +78,8 @@ function formatPermissionLabel(permission: Permission) {
 }
 
 export default function RoleDetail() {
+  const { hasAllPermissions } = useAuth();
+  const canManageRoles = hasAllPermissions("ROLE_MANAGE");
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
@@ -104,6 +107,7 @@ export default function RoleDetail() {
     return (
       <FormPanelWithReadMode
         title="Role details"
+        disableEdit={!canManageRoles}
         schema={UpdateRoleSchema}
         onSubmit={async (formData) => {
           void updateRole({

@@ -1,4 +1,4 @@
-import { ChevronRight, Home, LogOut, PersonStanding, Settings } from "lucide-react";
+import { ChevronRight, FolderKanban, Home, LogOut, PersonStanding, Settings } from "lucide-react";
 import type { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router";
 
@@ -44,6 +44,12 @@ const ITEMS: SidebarItem[] = [
     title: "Dashboard",
     url: "/",
     icon: <Home className="h-4 w-4" />,
+  },
+  {
+    title: "Projects",
+    url: "/projects",
+    icon: <FolderKanban className="h-4 w-4" />,
+    activePatterns: [/^\/projects(\/|$)/],
   },
   {
     title: "User Management",

@@ -73,6 +73,19 @@ const router = createBrowserRouter([
     ],
   },
   {
+    path: "/projects",
+    children: [
+      {
+        index: true,
+        element: <LazyLoadedRoute src="./projects" isProtected />,
+      },
+      {
+        path: ":id",
+        element: <LazyLoadedRoute src="./projects/[id]" isProtected />,
+      },
+    ],
+  },
+  {
     path: "/settings",
     element: <LazyLoadedRoute src="./settings" isProtected />,
   },
