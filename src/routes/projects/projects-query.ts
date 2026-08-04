@@ -10,8 +10,12 @@ export const PROJECTS_QUERY = gql(`
         name
         description
         status
+        ownerName
         progressPercent
         memberCount
+        taskCount
+        myRoleName
+        myRoleCode
         createdAt
         updatedAt
       }

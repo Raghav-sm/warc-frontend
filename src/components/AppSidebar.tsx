@@ -1,4 +1,4 @@
-import { ChevronRight, FolderKanban, Home, LogOut, PersonStanding, Settings } from "lucide-react";
+import { ChevronRight, FolderKanban, Home, ListTodo, LogOut, PersonStanding, Settings } from "lucide-react";
 import type { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router";
 
@@ -50,6 +50,11 @@ const ITEMS: SidebarItem[] = [
     url: "/projects",
     icon: <FolderKanban className="h-4 w-4" />,
     activePatterns: [/^\/projects(\/|$)/],
+  },
+  {
+    title: "My Tasks",
+    url: "/my-tasks",
+    icon: <ListTodo className="h-4 w-4" />,
   },
   {
     title: "User Management",
@@ -142,25 +147,23 @@ export function AppSidebar() {
   const renderNavItem = (item: SidebarItem) => {
     if (isGroup(item)) {
       return (
-        <SidebarMenu key={item.title}>
-          <Collapsible asChild defaultOpen={hasActiveItem(item)} className="group/collapsible">
-            <SidebarMenuItem>
-              <CollapsibleTrigger asChild>
-                <SidebarMenuButton
-                  tooltip={item.title}
-                  className="group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
-                >
-                  {item.icon && <span className="shrink-0">{item.icon}</span>}
-                  <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
-                  <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
-                </SidebarMenuButton>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <SidebarMenuSub>{item.items.map(renderSubMenuItem)}</SidebarMenuSub>
-              </CollapsibleContent>
-            </SidebarMenuItem>
-          </Collapsible>
-        </SidebarMenu>
+        <Collapsible key={item.title} asChild defaultOpen={hasActiveItem(item)} className="group/collapsible">
+          <SidebarMenuItem>
+            <CollapsibleTrigger asChild>
+              <SidebarMenuButton
+                tooltip={item.title}
+                className="group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
+              >
+                {item.icon && <span className="shrink-0">{item.icon}</span>}
+                <span className="group-data-[collapsible=icon]:hidden">{item.title}</span>
+                <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden" />
+              </SidebarMenuButton>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <SidebarMenuSub>{item.items.map(renderSubMenuItem)}</SidebarMenuSub>
+            </CollapsibleContent>
+          </SidebarMenuItem>
+        </Collapsible>
       );
     }
     return renderMenuItem(item);
@@ -181,7 +184,9 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="flex flex-col gap-0">
-        <SidebarGroup>{ITEMS.map(renderNavItem)}</SidebarGroup>
+        <SidebarGroup>
+          <SidebarMenu className="gap-1.5">{ITEMS.map(renderNavItem)}</SidebarMenu>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter className="border-t border-border p-2">

@@ -2,6 +2,7 @@ import { ArrowLeftIcon, HomeIcon } from "lucide-react";
 import { Fragment } from "react";
 
 import { AppSidebar } from "@/components/AppSidebar";
+import { NotificationBell } from "@/components/NotificationBell";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -67,6 +68,9 @@ export default function Layout({
                 </Breadcrumb>
               </>
             )}
+            <div className="ml-auto flex items-center gap-2">
+              <NotificationBell />
+            </div>
           </header>
           <div className={contentClassName ?? "p-4 px-8 w-full max-w-7xl md:mx-auto"}>
             {(title || subtitle || headerActions) && (

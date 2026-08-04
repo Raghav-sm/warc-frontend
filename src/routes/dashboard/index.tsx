@@ -83,7 +83,7 @@ export default function Dashboard() {
         showIndexColumn
         data={myTasks}
         columns={taskColumns}
-        onClick={(task) => navigate(`/projects/${task.projectId}?tab=board`)}
+        onClick={(task) => navigate(`/projects/${task.projectId}/tasks/${task.id}`)}
       />
     );
   };

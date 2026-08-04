@@ -12,6 +12,7 @@ type KanbanTaskCardProps = {
   progress: number;
   weight?: number;
   assignees: AssigneeInfo[];
+  isBlocked?: boolean;
   onClick?: () => void;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
   isDragging?: boolean;
@@ -24,6 +25,7 @@ export function KanbanTaskCard({
   progress,
   weight,
   assignees,
+  isBlocked,
   onClick,
   dragHandleProps,
   isDragging,
@@ -68,7 +70,14 @@ export function KanbanTaskCard({
         <div className="space-y-1.5">
           <div className="flex items-start justify-between gap-2">
             <h4 className="text-sm font-medium leading-snug text-foreground line-clamp-2">{title}</h4>
-            <PriorityBadge priority={priority} className="shrink-0 text-[10px] px-1.5 py-0" />
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <PriorityBadge priority={priority} className="text-[10px] px-1.5 py-0" />
+              {isBlocked ? (
+                <span className="rounded border border-primary/20 bg-primary/5 px-1.5 py-0 text-[10px] font-medium text-primary">
+                  Blocked
+                </span>
+              ) : null}
+            </div>
           </div>
           <ProgressWithLabel value={progress} />
         </div>

@@ -34,6 +34,7 @@ export const PROJECT_TASKS_QUERY = gql(`
         priority
         dueDate
         projectId
+        isBlocked
         assignees {
           id
           userId
@@ -127,12 +128,76 @@ export const CREATE_TASK_MUTATION = gql(`
 `) as DocumentNode;
 
 export const UPDATE_TASK_MUTATION = gql(`
-  mutation UpdateTask($id: ID!, $status: TaskStatusEnumType, $progress: Int) {
-    updateTask(id: $id, status: $status, progress: $progress) {
+  mutation UpdateTask(
+    $id: ID!
+    $title: String
+    $description: String
+    $weight: Int
+    $priority: TaskPriorityEnumType
+    $dueDate: DateTime
+    $status: TaskStatusEnumType
+    $progress: Int
+  ) {
+    updateTask(
+      id: $id
+      title: $title
+      description: $description
+      weight: $weight
+      priority: $priority
+      dueDate: $dueDate
+      status: $status
+      progress: $progress
+    ) {
       id
+      title
+      description
+      weight
+      priority
+      dueDate
       status
       progress
+      isBlocked
     }
+  }
+`) as DocumentNode;
+
+export const ADD_TASK_ASSIGNEE_MUTATION = gql(`
+  mutation AddTaskAssignee($taskId: ID!, $assigneeId: ID!) {
+    addTaskAssignee(taskId: $taskId, assigneeId: $assigneeId) {
+      id
+      assignees {
+        id
+        userId
+        user {
+          id
+          fullName
+          email
+        }
+      }
+    }
+  }
+`) as DocumentNode;
+
+export const REMOVE_TASK_ASSIGNEE_MUTATION = gql(`
+  mutation RemoveTaskAssignee($taskId: ID!, $assigneeId: ID!) {
+    removeTaskAssignee(taskId: $taskId, assigneeId: $assigneeId) {
+      id
+      assignees {
+        id
+        userId
+        user {
+          id
+          fullName
+          email
+        }
+      }
+    }
+  }
+`) as DocumentNode;
+
+export const DELETE_TASK_MUTATION = gql(`
+  mutation DeleteTask($id: ID!) {
+    deleteTask(id: $id)
   }
 `) as DocumentNode;
 

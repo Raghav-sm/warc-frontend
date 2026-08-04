@@ -32,5 +32,9 @@ export function useProjectPermissions(projectId: string | undefined) {
     canManageMemberRoles: has("MEMBER_MANAGE_ROLES"),
     canRemoveMember: has("MEMBER_REMOVE"),
     canChangeTaskStatus: has("TASK_CHANGE_STATUS"),
+    canEditAnyTask: has("TASK_EDIT_ANY"),
+    canEditOwnTask: has("TASK_EDIT_OWN"),
+    canAssignTask: has("TASK_ASSIGN"),
+    canDeleteTask: has("TASK_DELETE"),
   };
 }

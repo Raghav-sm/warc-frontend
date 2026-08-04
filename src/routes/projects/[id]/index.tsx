@@ -1,15 +1,14 @@
 import { useMutation, useQuery } from "@apollo/client";
 import type { DropResult } from "@hello-pangea/dnd";
+import { Plus } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import z from "zod";
 
-import { AssigneeStack } from "@/components/AssigneeStack";
 import { DataTable } from "@/components/DataTable";
 import { DataTableSkeleton } from "@/components/DataTableSkeleton";
-import { DetailSheet } from "@/components/DetailSheet";
 import { EntityCard } from "@/components/EntityCard";
 import { ErrorAlert } from "@/components/ErrorAlert";
 import { FormDialog } from "@/components/FormDialog";
@@ -17,31 +16,24 @@ import { KANBAN_COLUMNS, KanbanBoard } from "@/components/KanbanBoard";
 import { KanbanTaskCard } from "@/components/KanbanTaskCard";
 import Layout from "@/components/Layout";
 import { PageSection } from "@/components/PageSection";
-import { PriorityBadge } from "@/components/PriorityBadge";
 import { ProgressWithLabel } from "@/components/ProgressWithLabel";
-import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WeightSummary } from "@/components/WeightSummary";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
-import { cn } from "@/utils/classnames";
 import { formatStatus } from "@/utils/format-status";
 import { getGraphQLErrorMessage } from "@/utils/graphql-errors";
 import { MESSAGE_MAP, VALIDATION_RULES } from "@/utils/validation";
 
 import {
   ADD_PROJECT_MEMBER_MUTATION,
-  CREATE_SUBTASK_MUTATION,
+  ADD_TASK_ASSIGNEE_MUTATION,
   CREATE_TASK_MUTATION,
   PROJECT_DETAIL_QUERY,
   PROJECT_MEMBERS_QUERY,
   PROJECT_ROLES_QUERY,
   PROJECT_TASKS_QUERY,
   PROJECT_USERS_QUERY,
-  TASK_DETAIL_QUERY,
-  UPDATE_SUBTASK_MUTATION,
   UPDATE_TASK_MUTATION,
 } from "./project-detail-query";
 
@@ -54,6 +46,8 @@ const CreateTaskSchema = z.object({
   description: z.string().trim().optional().nullable(),
   weight: z.coerce.number().int().min(1).max(100),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
+  dueDate: z.string().optional().nullable(),
+  assigneeIds: z.array(z.string()).optional().default([]),
 });
 
 const AddMemberSchema = z.object({
@@ -68,12 +62,13 @@ type BoardTask = {
   priority: string;
   progress: number;
   weight: number;
+  isBlocked?: boolean;
   assignees: TaskAssigneeRow[];
 };
 
 type ProjectRoleOption = { id: string; code: string; name: string };
 type UserOption = { id: string; fullName?: string | null; email?: string | null };
-type SubtaskItem = { id: string; title: string; weight: number; isComplete: boolean };
+type MemberOption = { userId: string; fullName?: string | null; email?: string | null };
 type TaskAssigneeRow = { user?: { fullName?: string | null; email?: string | null } | null };
 
 const PROJECT_ROLE_CODES = new Set(["MANAGER", "DEV", "VIEWER"]);
@@ -82,11 +77,8 @@ export default function ProjectDetailPage() {
   const { id: projectId = "" } = useParams();
   const navigate = useNavigate();
   const [tab, setTab] = useQueryState("tab", parseAsString.withDefault("board"));
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
-  const [newSubtaskWeight, setNewSubtaskWeight] = useState("10");
 
   const permissions = useProjectPermissions(projectId);
 
@@ -121,11 +113,6 @@ export default function ProjectDetailPage() {
     skip: !projectId,
   });
 
-  const { data: taskDetailData, refetch: refetchTaskDetail } = useQuery(TASK_DETAIL_QUERY, {
-    variables: { id: selectedTaskId ?? "" },
-    skip: !selectedTaskId,
-  });
-
   const { data: rolesData } = useQuery(PROJECT_ROLES_QUERY, { variables: { limit: 50 } });
   const { data: usersData } = useQuery(PROJECT_USERS_QUERY, { variables: { limit: 50 } });
 
@@ -142,14 +129,9 @@ export default function ProjectDetailPage() {
     onCompleted: () => refetchTasks(),
   });
 
-  const [createTask, { loading: creatingTask, error: createTaskError }] = useMutation(CREATE_TASK_MUTATION, {
-    refetchQueries: ["ProjectTasks", "ProjectDetail"],
-    onCompleted: () => {
-      toast.success("Task created");
-      setCreateTaskOpen(false);
-    },
-    onError: (err) => toast.error(getGraphQLErrorMessage(err) || "Failed to create task"),
-  });
+  const [createTask, { loading: creatingTask, error: createTaskError }] = useMutation(CREATE_TASK_MUTATION);
+
+  const [addTaskAssignee] = useMutation(ADD_TASK_ASSIGNEE_MUTATION);
 
   const [addMember, { loading: addingMember, error: addMemberError }] = useMutation(ADD_PROJECT_MEMBER_MUTATION, {
     refetchQueries: ["ProjectMembers", "ProjectDetail"],
@@ -161,26 +143,17 @@ export default function ProjectDetailPage() {
     onError: (err) => toast.error(getGraphQLErrorMessage(err) || "Failed to add member"),
   });
 
-  const [createSubtask, { loading: creatingSubtask }] = useMutation(CREATE_SUBTASK_MUTATION, {
-    onCompleted: () => {
-      setNewSubtaskTitle("");
-      refetchTaskDetail();
-      refetchTasks();
-    },
-    onError: (err) => toast.error(getGraphQLErrorMessage(err) || "Failed to add subtask"),
-  });
-
-  const [updateSubtask] = useMutation(UPDATE_SUBTASK_MUTATION, {
-    onCompleted: () => {
-      refetchTaskDetail();
-      refetchTasks();
-    },
-    onError: (err) => toast.error(getGraphQLErrorMessage(err) || "Failed to update subtask"),
-  });
-
   const tasks: BoardTask[] = tasksData?.getTasks?.nodes ?? [];
   const members = membersData?.getProjectMembers?.nodes ?? [];
-  const selectedTask = taskDetailData?.getTask;
+
+  const memberAssigneeOptions = useMemo(
+    () =>
+      (members as MemberOption[]).map((member) => ({
+        label: member.fullName ?? member.email ?? member.userId,
+        value: member.userId,
+      })),
+    [members],
+  );
 
   const isInitialLoading = (projectLoading || tasksLoading) && !project && !tasksData;
   const hasError = projectError || tasksError;
@@ -197,6 +170,11 @@ export default function ProjectDetailPage() {
     const nextStatus = result.destination.droppableId;
     if (nextStatus === item.status || !permissions.canChangeTaskStatus) return;
 
+    if (nextStatus === "DONE" && item.isBlocked) {
+      toast.error("Complete upstream dependencies before marking this task done.");
+      return;
+    }
+
     await updateTask({
       variables: {
         id: item.id,
@@ -205,8 +183,6 @@ export default function ProjectDetailPage() {
       },
     });
   };
-
-  const subtaskWeights = (selectedTask?.subtasks ?? ([] as SubtaskItem[])).map((subtask: SubtaskItem) => subtask.weight);
 
   const renderBoard = () => {
     if (tasksLoading && !tasksData) {
@@ -230,9 +206,10 @@ export default function ProjectDetailPage() {
             assignees={(task.assignees ?? []).map((entry) => ({
               fullName: entry.user?.fullName ?? entry.user?.email,
             }))}
+            isBlocked={task.isBlocked}
             dragHandleProps={permissions.canChangeTaskStatus ? dragHandleProps : null}
             isDragging={isDragging}
-            onClick={() => setSelectedTaskId(task.id)}
+            onClick={() => navigate(`/projects/${projectId}/tasks/${task.id}`)}
           />
         )}
       />
@@ -317,15 +294,32 @@ export default function ProjectDetailPage() {
                   error={createTaskError}
                   submitLabel="Create task"
                   onSubmit={async (formData) => {
-                    await createTask({
-                      variables: {
-                        projectId,
-                        title: formData.title,
-                        description: formData.description,
-                        weight: formData.weight,
-                        priority: formData.priority,
-                      },
-                    });
+                    try {
+                      const result = await createTask({
+                        variables: {
+                          projectId,
+                          title: formData.title,
+                          description: formData.description,
+                          weight: formData.weight,
+                          priority: formData.priority,
+                          dueDate: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+                        },
+                      });
+                      const newTaskId = result.data?.createTask?.id;
+                      const assigneeIds = formData.assigneeIds ?? [];
+                      if (newTaskId && permissions.canAssignTask) {
+                        for (const assigneeId of assigneeIds) {
+                          await addTaskAssignee({
+                            variables: { taskId: newTaskId, assigneeId },
+                          });
+                        }
+                      }
+                      await refetchTasks();
+                      toast.success("Task created");
+                      setCreateTaskOpen(false);
+                    } catch (err) {
+                      toast.error(getGraphQLErrorMessage(err as Error) || "Failed to create task");
+                    }
                   }}
                 >
                   {({ FormInput }) => (
@@ -352,6 +346,17 @@ export default function ProjectDetailPage() {
                           { label: "Urgent", value: "URGENT" },
                         ]}
                       />
+                      <FormInput fieldName="dueDate" label="Due date" type="date" colSpan="full" />
+                      {permissions.canAssignTask && memberAssigneeOptions.length > 0 ? (
+                        <FormInput
+                          fieldName="assigneeIds"
+                          label="Assignees (optional)"
+                          type="multi-select"
+                          colSpan="full"
+                          className="w-full min-w-0"
+                          options={memberAssigneeOptions}
+                        />
+                      ) : null}
                     </>
                   )}
                 </FormDialog>
@@ -367,7 +372,12 @@ export default function ProjectDetailPage() {
                   <FormDialog
                     open={addMemberOpen}
                     onOpenChange={setAddMemberOpen}
-                    trigger={<Button variant="outline">Add member</Button>}
+                    trigger={
+                      <Button className="bg-[#111111] text-white hover:bg-[#111111]/90 border-transparent">
+                        <Plus className="size-4" />
+                        Add member
+                      </Button>
+                    }
                     title="Add project member"
                     description="Invite a user and assign their project role."
                     schema={AddMemberSchema}
@@ -419,88 +429,6 @@ export default function ProjectDetailPage() {
           </TabsContent>
         </Tabs>
       </div>
-
-      <DetailSheet
-        open={Boolean(selectedTaskId)}
-        onOpenChange={(open) => {
-          if (!open) setSelectedTaskId(null);
-        }}
-        title={selectedTask?.title ?? "Task"}
-        description={selectedTask?.description ?? undefined}
-      >
-        {selectedTask ? (
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              <StatusBadge status={selectedTask.status} />
-              <PriorityBadge priority={selectedTask.priority} />
-            </div>
-            <ProgressWithLabel value={selectedTask.progress} />
-            <AssigneeStack
-              assignees={(selectedTask.assignees ?? ([] as TaskAssigneeRow[])).map((entry: TaskAssigneeRow) => ({
-                fullName: entry.user?.fullName ?? entry.user?.email,
-              }))}
-            />
-            {selectedTask.type === "CHECKLIST" ? (
-              <div className="space-y-3">
-                <WeightSummary weights={subtaskWeights} label="Remaining subtask weight" />
-                <ul className="space-y-2">
-                  {(selectedTask.subtasks ?? ([] as SubtaskItem[])).map((subtask: SubtaskItem) => (
-                    <li key={subtask.id} className="flex items-center gap-2 rounded-md border border-neutral-200 p-2">
-                      <Checkbox
-                        checked={subtask.isComplete}
-                        onCheckedChange={(checked) =>
-                          updateSubtask({
-                            variables: { id: subtask.id, isComplete: checked === true },
-                          })
-                        }
-                      />
-                      <span className={cn("flex-1 text-sm", subtask.isComplete && "line-through text-muted-foreground")}>
-                        {subtask.title}
-                      </span>
-                      <span className="text-xs text-muted-foreground tabular-nums">{subtask.weight}%</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Input
-                    placeholder="Subtask title"
-                    value={newSubtaskTitle}
-                    onChange={(event) => setNewSubtaskTitle(event.target.value)}
-                  />
-                  <Input
-                    type="number"
-                    min={1}
-                    max={100}
-                    className="sm:w-24"
-                    value={newSubtaskWeight}
-                    onChange={(event) => setNewSubtaskWeight(event.target.value)}
-                  />
-                  <Button
-                    loading={creatingSubtask}
-                    disabled={!newSubtaskTitle.trim()}
-                    onClick={() =>
-                      createSubtask({
-                        variables: {
-                          taskId: selectedTask.id,
-                          title: newSubtaskTitle.trim(),
-                          weight: Number(newSubtaskWeight) || 0,
-                        },
-                      })
-                    }
-                  >
-                    Add subtask
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-            <Button variant="outline" className="w-full" onClick={() => navigate(`/projects/${projectId}?tab=board`)}>
-              Close
-            </Button>
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">Loading task…</p>
-        )}
-      </DetailSheet>
     </Layout>
   );
 }

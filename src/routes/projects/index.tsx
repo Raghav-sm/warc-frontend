@@ -9,11 +9,10 @@ import z from "zod";
 import { useAuth } from "@/components/AuthProvider";
 import { CardGrid } from "@/components/CardGrid";
 import { EmptyState } from "@/components/EmptyState";
-import { EntityCard } from "@/components/EntityCard";
 import { ErrorAlert } from "@/components/ErrorAlert";
 import { FormDialog } from "@/components/FormDialog";
 import Layout from "@/components/Layout";
-import { ProgressWithLabel } from "@/components/ProgressWithLabel";
+import { ProjectCard, type ProjectDisplayType } from "@/components/ProjectCard";
 import { SearchInput } from "@/components/SearchInput";
 import { Button } from "@/components/ui/button";
 import { getGraphQLErrorMessage } from "@/utils/graphql-errors";
@@ -34,15 +33,6 @@ const CreateProjectSchema = z.object({
     .optional()
     .nullable(),
 });
-
-type ProjectListItem = {
-  id: string;
-  name: string;
-  description?: string | null;
-  status: string;
-  progressPercent: number;
-  memberCount: number;
-};
 
 const filterParsers = {
   text: parseAsString.withDefault(""),
@@ -80,7 +70,7 @@ export default function ProjectsPage() {
   });
 
   const pageInfo = data?.getProjects?.pageInfo;
-  const projects = (data?.getProjects?.nodes ?? []) as ProjectListItem[];
+  const projects = (data?.getProjects?.nodes ?? []) as ProjectDisplayType[];
   const isInitialLoading = loading && !data;
   const hasError = error || (!loading && !data);
   const isFetchingMore = networkStatus === NetworkStatus.fetchMore;
@@ -122,14 +112,7 @@ export default function ProjectsPage() {
       <>
         <CardGrid>
           {projects.map((project) => (
-            <EntityCard
-              key={project.id}
-              title={project.name}
-              subtitle={project.description ?? `${project.memberCount} members · ${project.status}`}
-              icon={FolderKanban}
-              onClick={() => navigate(`/projects/${project.id}`)}
-              footer={<ProgressWithLabel value={project.progressPercent} />}
-            />
+            <ProjectCard key={project.id} project={project} onClick={() => navigate(`/projects/${project.id}`)} />
           ))}
         </CardGrid>
         {!pageInfo?.isLastPage ? (
