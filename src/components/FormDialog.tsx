@@ -1,7 +1,7 @@
 import type { ApolloError } from "@apollo/client";
 import type { ReactNode } from "react";
 import { useRef } from "react";
-import type { FieldValues } from "react-hook-form";
+import type { DefaultValues, FieldValues } from "react-hook-form";
 import type z from "zod";
 
 import { DEFAULT_FORM_REF_VALUE, FormPanel, type FormPanelProps, type FormPanelRefType } from "@/components/Form";
@@ -33,6 +33,7 @@ type FormDialogProps<
   error?: ApolloError;
   submitLabel: string;
   contentClassName?: string;
+  defaultValues?: DefaultValues<TFieldValues>;
   children: FormPanelProps<TFieldValues, TContext, TTransformedValues>["children"];
 };
 
@@ -53,6 +54,7 @@ export function FormDialog<
   error,
   submitLabel,
   contentClassName,
+  defaultValues,
   children,
 }: FormDialogProps<TFieldValues, TContext, TTransformedValues>) {
   const buttonRef = useRef<FormPanelRefType>(DEFAULT_FORM_REF_VALUE);
@@ -77,6 +79,7 @@ export function FormDialog<
           loading={loading}
           error={error}
           buttonRef={buttonRef}
+          defaultValues={defaultValues}
         >
           {children}
         </FormPanel>

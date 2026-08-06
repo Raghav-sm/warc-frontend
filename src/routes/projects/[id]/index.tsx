@@ -36,7 +36,7 @@ import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { formatStatus } from "@/utils/format-status";
 import { getGraphQLErrorMessage } from "@/utils/graphql-errors";
 import { MESSAGE_MAP, VALIDATION_RULES } from "@/utils/validation";
-
+import { ProjectResources } from "./ProjectResources";
 import {
   ADD_PROJECT_MEMBER_MUTATION,
   ADD_TASK_ASSIGNEE_MUTATION,
@@ -306,8 +306,9 @@ export default function ProjectDetailPage() {
         </div>
 
         <Tabs value={tab} onValueChange={setTab}>
-          <TabsList>
+          <TabsList className="w-full">
             <TabsTrigger value="board">Board</TabsTrigger>
+            <TabsTrigger value="resources">Resources</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
           <TabsContent value="board" className="mt-4 space-y-4">
@@ -394,6 +395,9 @@ export default function ProjectDetailPage() {
               ) : null}
             </div>
             {renderBoard()}
+          </TabsContent>
+          <TabsContent value="resources" className="mt-4">
+            <ProjectResources projectId={projectId} />
           </TabsContent>
           <TabsContent value="settings" className="mt-4 space-y-4">
             <PageSection
