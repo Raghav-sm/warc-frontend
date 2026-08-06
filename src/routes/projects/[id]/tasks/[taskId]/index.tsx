@@ -161,7 +161,7 @@ export default function TaskWorkspacePage() {
             <AlertDialogHeader>
               <AlertDialogTitle>Delete this task?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. The task and its data will be permanently removed.
+                The task will be moved to Trash. An administrator can permanently delete it from there.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="-mx-0 -mb-0 border-0 bg-transparent p-0 pt-2">

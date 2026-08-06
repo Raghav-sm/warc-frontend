@@ -1,4 +1,4 @@
-import { ChevronRight, FolderKanban, Home, ListTodo, LogOut, PersonStanding, Settings } from "lucide-react";
+import { ChevronRight, FolderKanban, Home, ListTodo, LogOut, PersonStanding, Search, Settings, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router";
 
@@ -41,6 +41,11 @@ type SidebarItem = SidebarLinkItem | SidebarGroupItem;
 
 const ITEMS: SidebarItem[] = [
   {
+    title: "Search",
+    url: "/search",
+    icon: <Search className="h-4 w-4" />,
+  },
+  {
     title: "Dashboard",
     url: "/",
     icon: <Home className="h-4 w-4" />,
@@ -55,6 +60,11 @@ const ITEMS: SidebarItem[] = [
     title: "My Tasks",
     url: "/my-tasks",
     icon: <ListTodo className="h-4 w-4" />,
+  },
+  {
+    title: "Trash",
+    url: "/trash",
+    icon: <Trash2 className="h-4 w-4" />,
   },
   {
     title: "User Management",

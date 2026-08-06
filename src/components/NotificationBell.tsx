@@ -1,4 +1,4 @@
-import { useApolloClient, useMutation, useQuery } from "@apollo/client";
+import { useApolloClient, useMutation, useQuery, useSubscription } from "@apollo/client";
 import dayjs from "dayjs";
 import type { DocumentNode } from "graphql";
 import { Bell } from "lucide-react";
@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { gql } from "@/__generated__";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { NOTIFICATION_CREATED_SUBSCRIPTION } from "@/graphql/subscriptions";
 import { NOTIFICATION_TASK_CONTEXT_QUERY } from "@/routes/projects/[id]/tasks/[taskId]/task-detail-query";
 import { getGraphQLErrorMessage } from "@/utils/graphql-errors";
 
@@ -60,6 +61,12 @@ export function NotificationBell() {
     variables: { page: 1, limit: 20 },
     pollInterval: 30000,
     fetchPolicy: "cache-and-network",
+  });
+
+  useSubscription(NOTIFICATION_CREATED_SUBSCRIPTION, {
+    onData: () => {
+      void refetch();
+    },
   });
 
   const [markRead] = useMutation(MARK_NOTIFICATION_READ, {

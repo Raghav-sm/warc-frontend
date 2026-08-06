@@ -1,7 +1,9 @@
 import { SearchIcon } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-import debounce from "@/utils/debounce";
+import { useDebouncedCallback } from "@/hooks/useDebouncedCallback";
+import { cn } from "@/utils/classnames";
+
 import { InputGroup, InputGroupAddon, InputGroupInput } from "./ui/input-group";
 
 interface SearchInputProps {
@@ -11,6 +13,7 @@ interface SearchInputProps {
   value?: string;
   onValueChange?: (value: string) => void;
   disabled?: boolean;
+  className?: string;
 }
 
 export function SearchInput({
@@ -20,42 +23,41 @@ export function SearchInput({
   value: controlledValue,
   onValueChange,
   disabled = false,
+  className,
 }: SearchInputProps) {
-  const [internalValue, setInternalValue] = useState("");
   const isControlled = controlledValue !== undefined;
-  const searchValue = isControlled ? controlledValue : internalValue;
+  const [internalValue, setInternalValue] = useState("");
+  const [draft, setDraft] = useState(controlledValue ?? "");
 
-  // Use ref to store the latest onSearch callback
-  const onSearchRef = useRef(onSearch);
   useEffect(() => {
-    onSearchRef.current = onSearch;
-  }, [onSearch]);
+    if (isControlled) {
+      setDraft(controlledValue ?? "");
+    }
+  }, [controlledValue, isControlled]);
 
-  // Create debounced function once and keep it stable
-  const debouncedSearchRef = useRef(
-    debounce((value: string) => {
-      onSearchRef.current(value);
-    }, debounceMs),
-  );
+  const debouncedSearch = useDebouncedCallback(onSearch, debounceMs);
+  const displayValue = isControlled ? draft : internalValue;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (!isControlled) {
+
+    if (isControlled) {
+      setDraft(value);
+    } else {
       setInternalValue(value);
     }
-    if (onValueChange) {
-      onValueChange(value);
-    }
-    debouncedSearchRef.current(value);
+
+    onValueChange?.(value);
+    debouncedSearch(value);
   };
 
   return (
-    <div className="relative w-48">
+    <div className={cn("relative w-48", className)}>
       <InputGroup>
         <InputGroupInput
           id="inline-start-input"
           placeholder={placeholder}
-          value={searchValue}
+          value={displayValue}
           onChange={handleChange}
           disabled={disabled}
         />

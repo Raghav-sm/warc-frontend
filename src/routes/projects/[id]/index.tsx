@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import type { DropResult } from "@hello-pangea/dnd";
 import { Plus } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
@@ -17,9 +17,21 @@ import { KanbanTaskCard } from "@/components/KanbanTaskCard";
 import Layout from "@/components/Layout";
 import { PageSection } from "@/components/PageSection";
 import { ProgressWithLabel } from "@/components/ProgressWithLabel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WeightSummary } from "@/components/WeightSummary";
+import { TASK_UPDATED_SUBSCRIPTION } from "@/graphql/subscriptions";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { formatStatus } from "@/utils/format-status";
 import { getGraphQLErrorMessage } from "@/utils/graphql-errors";
@@ -29,6 +41,7 @@ import {
   ADD_PROJECT_MEMBER_MUTATION,
   ADD_TASK_ASSIGNEE_MUTATION,
   CREATE_TASK_MUTATION,
+  DELETE_PROJECT_MUTATION,
   PROJECT_DETAIL_QUERY,
   PROJECT_MEMBERS_QUERY,
   PROJECT_ROLES_QUERY,
@@ -79,6 +92,7 @@ export default function ProjectDetailPage() {
   const [tab, setTab] = useQueryState("tab", parseAsString.withDefault("board"));
   const [createTaskOpen, setCreateTaskOpen] = useState(false);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [deleteProjectOpen, setDeleteProjectOpen] = useState(false);
 
   const permissions = useProjectPermissions(projectId);
 
@@ -101,6 +115,14 @@ export default function ProjectDetailPage() {
   } = useQuery(PROJECT_TASKS_QUERY, {
     variables: { limit: 100, filters: { projectId } },
     skip: !projectId,
+  });
+
+  useSubscription(TASK_UPDATED_SUBSCRIPTION, {
+    variables: { projectId },
+    skip: !projectId,
+    onData: () => {
+      void refetchTasks();
+    },
   });
 
   const {
@@ -141,6 +163,15 @@ export default function ProjectDetailPage() {
       refetchMembers();
     },
     onError: (err) => toast.error(getGraphQLErrorMessage(err) || "Failed to add member"),
+  });
+
+  const [deleteProject, { loading: deletingProject }] = useMutation(DELETE_PROJECT_MUTATION, {
+    onCompleted: () => {
+      toast.success("Project moved to Trash");
+      setDeleteProjectOpen(false);
+      navigate("/projects");
+    },
+    onError: (err) => toast.error(getGraphQLErrorMessage(err) || "Failed to delete project"),
   });
 
   const tasks: BoardTask[] = tasksData?.getTasks?.nodes ?? [];
@@ -426,6 +457,43 @@ export default function ProjectDetailPage() {
             >
               {renderSettings()}
             </PageSection>
+
+            {permissions.canDeleteProject ? (
+              <PageSection title="Danger zone">
+                <div className="rounded-md border border-neutral-200 bg-white p-4 shadow-xs">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Soft-delete this project and its tasks. Items move to Trash; an administrator can permanently delete them
+                    from there.
+                  </p>
+                  <AlertDialog open={deleteProjectOpen} onOpenChange={setDeleteProjectOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive">Delete project</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this project?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {project.name} and its tasks will be moved to Trash. You can restore them from the Trash page
+                          unless an administrator permanently deletes them.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={deletingProject}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          disabled={deletingProject}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            void deleteProject({ variables: { id: projectId } });
+                          }}
+                        >
+                          {deletingProject ? "Deleting…" : "Delete project"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </PageSection>
+            ) : null}
           </TabsContent>
         </Tabs>
       </div>

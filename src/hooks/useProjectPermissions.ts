@@ -28,6 +28,7 @@ export function useProjectPermissions(projectId: string | undefined) {
     myRoleCode: data?.getProject?.myRoleCode ?? null,
     canCreateTask: has("TASK_CREATE"),
     canEditProject: has("PROJECT_EDIT"),
+    canDeleteProject: has("PROJECT_DELETE"),
     canInviteMember: has("MEMBER_INVITE"),
     canManageMemberRoles: has("MEMBER_MANAGE_ROLES"),
     canRemoveMember: has("MEMBER_REMOVE"),

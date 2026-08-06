@@ -1,4 +1,4 @@
-import { type LucideIcon, Users } from "lucide-react";
+import { AlertCircle, Calendar, FolderKanban, ListTodo, type LucideIcon, Users } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +18,14 @@ const TONE_ICON_WRAP: Record<KpiTone, string> = {
 };
 
 const KPI_ICONS: Record<string, LucideIcon> = {
+  "projects-total": FolderKanban,
+  "tasks-open": ListTodo,
+  "tasks-due-week": Calendar,
+  "tasks-overdue": AlertCircle,
+  "project-open-tasks": FolderKanban,
+  "project-overdue": AlertCircle,
+  "project-blocked": ListTodo,
+  "projects-active-week": Calendar,
   "users-total": Users,
   "users-active": Users,
   "roles-total": Users,
@@ -34,7 +42,7 @@ export type KpiData = {
 
 export function KpiCard({ kpi }: { kpi: KpiData }) {
   const tone = (kpi.tone in TONE_ICON_WRAP ? kpi.tone : "rose") as KpiTone;
-  const Icon = KPI_ICONS[kpi.key] ?? Users;
+  const Icon = KPI_ICONS[kpi.key] ?? ListTodo;
 
   return (
     <Card className={cardClasses}>

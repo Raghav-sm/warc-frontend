@@ -201,6 +201,12 @@ export const DELETE_TASK_MUTATION = gql(`
   }
 `) as DocumentNode;
 
+export const DELETE_PROJECT_MUTATION = gql(`
+  mutation DeleteProject($id: ID!) {
+    deleteProject(id: $id)
+  }
+`) as DocumentNode;
+
 export const ADD_PROJECT_MEMBER_MUTATION = gql(`
   mutation AddProjectMember($projectId: ID!, $memberUserId: ID!, $roleId: ID!) {
     addProjectMember(projectId: $projectId, memberUserId: $memberUserId, roleId: $roleId) {

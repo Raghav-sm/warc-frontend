@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import dayjs from "dayjs";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Message, MessageAvatar, MessageContent, MessageFooter, MessageGroup } from "@/components/ui/message";
 import { Textarea } from "@/components/ui/textarea";
+import { COMMENT_ADDED_SUBSCRIPTION } from "@/graphql/subscriptions";
 import { cn } from "@/utils/classnames";
 import { getGraphQLErrorMessage } from "@/utils/graphql-errors";
 
@@ -48,9 +49,17 @@ export function TaskComments({ taskId, canComment = true, canEditComment }: Task
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editBody, setEditBody] = useState("");
 
-  const { data, loading, error } = useQuery(TASK_COMMENTS_QUERY, {
+  const { data, loading, error, refetch } = useQuery(TASK_COMMENTS_QUERY, {
     variables: { taskId, page: 1, limit: 100 },
     skip: !taskId,
+  });
+
+  useSubscription(COMMENT_ADDED_SUBSCRIPTION, {
+    variables: { taskId },
+    skip: !taskId,
+    onData: () => {
+      void refetch();
+    },
   });
 
   const [createComment, { loading: creating }] = useMutation(CREATE_COMMENT_MUTATION, {

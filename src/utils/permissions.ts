@@ -37,3 +37,9 @@ export type Permission = (typeof PERMISSIONS)[number];
 export function isPlatformPermission(permission: Permission): permission is (typeof PLATFORM_PERMISSIONS)[number] {
   return (PLATFORM_PERMISSIONS as readonly string[]).includes(permission);
 }
+
+const PLATFORM_ADMIN_ROLE_CODES = new Set(["SUPER_ADMIN", "ADMIN"]);
+
+export function isPlatformAdmin(roleCode: string | undefined | null): boolean {
+  return roleCode != null && PLATFORM_ADMIN_ROLE_CODES.has(roleCode);
+}

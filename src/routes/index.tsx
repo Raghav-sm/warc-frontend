@@ -1,12 +1,13 @@
 import type { ComponentType, ReactNode } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router";
 
+import AppShell from "@/components/AppShell";
 import NotFound from "@/components/NotFound";
+import { PageLayoutProvider } from "@/components/PageLayoutContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 type LazyLoadedRouteProps = {
   src: string;
-  isProtected?: boolean;
 };
 
 type RouteModule = {
@@ -29,19 +30,20 @@ function resolveRouteComponent(src: string): ComponentType {
   return module.default;
 }
 
-function LazyLoadedRoute({ src, isProtected = false }: LazyLoadedRouteProps): ReactNode {
+function LazyLoadedRoute({ src }: LazyLoadedRouteProps): ReactNode {
   const Component = resolveRouteComponent(src);
-  const routeElement = <Component />;
-
-  if (isProtected) return <ProtectedRoute>{routeElement}</ProtectedRoute>;
-  return routeElement;
+  return <Component />;
 }
 
+const protectedApp = (
+  <ProtectedRoute>
+    <PageLayoutProvider>
+      <AppShell />
+    </PageLayoutProvider>
+  </ProtectedRoute>
+);
+
 const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <LazyLoadedRoute src="./dashboard" isProtected />,
-  },
   {
     path: "/login",
     element: <LazyLoadedRoute src="./auth/login" />,
@@ -51,60 +53,77 @@ const router = createBrowserRouter([
     element: <LazyLoadedRoute src="./auth/signup" />,
   },
   {
-    path: "/user-management",
-    children: [
-      {
-        path: "members",
-        element: <LazyLoadedRoute src="./users-management/users" isProtected />,
-      },
-      {
-        path: "roles",
-        children: [
-          {
-            index: true,
-            element: <LazyLoadedRoute src="./users-management/roles" isProtected />,
-          },
-          {
-            path: ":id",
-            element: <LazyLoadedRoute src="./users-management/roles/[id]" isProtected />,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    path: "/projects",
+    element: protectedApp,
     children: [
       {
         index: true,
-        element: <LazyLoadedRoute src="./projects" isProtected />,
+        element: <LazyLoadedRoute src="./dashboard" />,
       },
       {
-        path: ":id",
+        path: "user-management",
         children: [
           {
-            index: true,
-            element: <LazyLoadedRoute src="./projects/[id]" isProtected />,
+            path: "members",
+            element: <LazyLoadedRoute src="./users-management/users" />,
           },
           {
-            path: "tasks/:taskId",
-            element: <LazyLoadedRoute src="./projects/[id]/tasks/[taskId]" isProtected />,
+            path: "roles",
+            children: [
+              {
+                index: true,
+                element: <LazyLoadedRoute src="./users-management/roles" />,
+              },
+              {
+                path: ":id",
+                element: <LazyLoadedRoute src="./users-management/roles/[id]" />,
+              },
+            ],
           },
         ],
       },
+      {
+        path: "projects",
+        children: [
+          {
+            index: true,
+            element: <LazyLoadedRoute src="./projects" />,
+          },
+          {
+            path: ":id",
+            children: [
+              {
+                index: true,
+                element: <LazyLoadedRoute src="./projects/[id]" />,
+              },
+              {
+                path: "tasks/:taskId",
+                element: <LazyLoadedRoute src="./projects/[id]/tasks/[taskId]" />,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        path: "my-tasks",
+        element: <LazyLoadedRoute src="./my-tasks" />,
+      },
+      {
+        path: "search",
+        element: <LazyLoadedRoute src="./search" />,
+      },
+      {
+        path: "trash",
+        element: <LazyLoadedRoute src="./trash" />,
+      },
+      {
+        path: "settings",
+        element: <LazyLoadedRoute src="./settings" />,
+      },
+      {
+        path: "*",
+        element: <NotFound />,
+      },
     ],
-  },
-  {
-    path: "/my-tasks",
-    element: <LazyLoadedRoute src="./my-tasks" isProtected />,
-  },
-  {
-    path: "/settings",
-    element: <LazyLoadedRoute src="./settings" isProtected />,
-  },
-  {
-    path: "*",
-    element: <LazyLoadedRoute src="@/components/NotFound" />,
   },
 ]);
 

@@ -12,6 +12,13 @@ export const DASHBOARD_QUERY = gql(`
         value
         tone
       }
+      projectKpis {
+        key
+        title
+        subtitle
+        value
+        tone
+      }
       recentUsers {
         id
         email
@@ -38,6 +45,83 @@ export const DASHBOARD_QUERY = gql(`
         priority
         dueDate
       }
+      taskStatusBreakdown {
+        status
+        count
+      }
+      tasksDueByDay {
+        date
+        label
+        count
+        tasks {
+          id
+          title
+          projectId
+          projectName
+        }
+      }
+      activeTimer {
+        id
+        taskId
+        taskTitle
+        projectId
+        projectName
+        startedAt
+      }
+      attentionItems {
+        id
+        kind
+        title
+        subtitle
+        taskId
+        projectId
+        notificationId
+      }
+      recentActivity {
+        id
+        type
+        message
+        entityType
+        entityId
+        isRead
+        createdAt
+        projectId
+        projectName
+      }
+      projectHealth {
+        projectId
+        projectName
+        openTaskCount
+        overdueCount
+        blockedCount
+        healthStatus
+      }
+      teamWorkload {
+        userId
+        userName
+        openTaskCount
+      }
+      projectRiskTasks {
+        id
+        title
+        projectId
+        projectName
+        status
+        priority
+        dueDate
+        isOverdue
+        isBlocked
+        assigneeNames
+        reason
+      }
+    }
+  }
+`) as DocumentNode;
+
+export const DASHBOARD_STOP_TIMER = gql(`
+  mutation DashboardStopTimer {
+    stopTimer {
+      id
     }
   }
 `) as DocumentNode;

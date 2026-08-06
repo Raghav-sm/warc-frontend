@@ -1,11 +1,13 @@
-import { ApolloClient, ApolloLink, InMemoryCache, type NormalizedCacheObject, Observable } from "@apollo/client";
+import { ApolloClient, ApolloLink, InMemoryCache, type NormalizedCacheObject, Observable, split } from "@apollo/client";
 import { onError } from "@apollo/client/link/error";
 import type { ServerError } from "@apollo/client/link/utils";
+import { getMainDefinition } from "@apollo/client/utilities";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 import { print } from "graphql";
 import { gql } from "@/__generated__";
 
 import paginationHelper from "./pagination-helper";
+import { createSubscriptionLink } from "./subscription-link";
 
 const GRAPHQL_URL = import.meta.env.VITE_GRAPHQL_BACKEND_URL;
 
@@ -216,10 +218,19 @@ const httpLink = createUploadLink({
  */
 export function createApolloClient(onLogout: () => void): ApolloClient<NormalizedCacheObject> {
   const errorLink = buildErrorLink(onLogout);
+  const subscriptionLink = createSubscriptionLink();
+
+  const link = split(
+    ({ query }) => {
+      const definition = getMainDefinition(query);
+      return definition.kind === "OperationDefinition" && definition.operation === "subscription";
+    },
+    subscriptionLink,
+    ApolloLink.from([errorLink, authLink, httpLink]),
+  );
 
   return new ApolloClient({
-    // Link chain: error handling → auth header injection → HTTP transport
-    link: ApolloLink.from([errorLink, authLink, httpLink]),
+    link,
     cache: new InMemoryCache({
       typePolicies: {
         Query: {
