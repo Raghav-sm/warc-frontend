@@ -1,4 +1,15 @@
-import { ChevronRight, FolderKanban, Home, ListTodo, LogOut, PersonStanding, Search, Settings, Trash2 } from "lucide-react";
+import {
+  ChevronRight,
+  FolderKanban,
+  Home,
+  ListTodo,
+  LogOut,
+  PersonStanding,
+  Search,
+  Settings,
+  StickyNote,
+  Trash2,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router";
 
@@ -60,6 +71,11 @@ const ITEMS: SidebarItem[] = [
     title: "My Tasks",
     url: "/my-tasks",
     icon: <ListTodo className="h-4 w-4" />,
+  },
+  {
+    title: "Notes",
+    url: "/notes",
+    icon: <StickyNote className="h-4 w-4" />,
   },
   {
     title: "Trash",
@@ -183,7 +199,7 @@ export function AppSidebar() {
   const displayName = user?.fullName ?? user?.email ?? "User";
 
   return (
-    <Sidebar className="bg-background border-r border-border" collapsible="icon">
+    <Sidebar className="bg-background border-r border-border" collapsible="offcanvas">
       <SidebarHeader>
         <NavLink to="/" className="flex flex-col p-2 hover:bg-muted/50 transition-colors rounded-lg">
           <BrandLogo variant="full" />

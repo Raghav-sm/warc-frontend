@@ -222,6 +222,7 @@ export function TaskContextPanel({ taskId, projectId, task, capabilities, onUpda
               onChange={handleStatusChange}
               options={statusOptions}
               readOnly={updatingTask}
+              searchable={false}
               className="w-full min-w-0"
             />
             {task.isBlocked ? (

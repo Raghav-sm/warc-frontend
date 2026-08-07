@@ -15,6 +15,7 @@ export type SingleSelectProps<TClearSet extends SingleSelectValue = never> = Fie
   searchPlaceholder?: string;
   options: SelectOption[];
   clearable?: boolean;
+  searchable?: boolean;
 };
 
 const commandFilter = (itemValue: string, search: string, keywords?: string[]) => {
@@ -33,6 +34,7 @@ const optionKeywords = (option: SelectOption): string[] => [
 export default function Select<TClearSet extends SingleSelectValue = never>(props: SingleSelectProps<TClearSet>) {
   const [open, setOpen] = useState(false);
   const selectedOption = props.options.find((option) => option.value === props.value);
+  const searchable = props.searchable ?? true;
 
   return (
     <Field data-invalid={props.isInvalid === true} className="w-auto">
@@ -54,7 +56,7 @@ export default function Select<TClearSet extends SingleSelectValue = never>(prop
         </PopoverTrigger>
         <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
           <Command filter={commandFilter}>
-            <CommandInput placeholder={props.searchPlaceholder} />
+            {searchable ? <CommandInput placeholder={props.searchPlaceholder} /> : null}
             <CommandList>
               <CommandEmpty>No results found.</CommandEmpty>
               <CommandGroup>

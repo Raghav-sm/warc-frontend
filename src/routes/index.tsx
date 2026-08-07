@@ -108,6 +108,10 @@ const router = createBrowserRouter([
         element: <LazyLoadedRoute src="./my-tasks" />,
       },
       {
+        path: "notes",
+        element: <LazyLoadedRoute src="./notes" />,
+      },
+      {
         path: "search",
         element: <LazyLoadedRoute src="./search" />,
       },

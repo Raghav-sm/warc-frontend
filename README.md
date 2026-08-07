@@ -1,93 +1,112 @@
 # Warc Frontend
 
-React admin app for Warc Analytics — Vite, React Router, Apollo Client, shadcn/ui, Zod.
+Web app for **Warc Analytics** — project boards, task collaboration, dashboard, search, trash, and personal notes.
+
+Built with **Vite**, **React**, **React Router**, **Apollo Client**, **shadcn/ui**, and **Zod**.
+
+## What it does
+
+- **Auth** — login, signup, JWT refresh, protected routes
+- **Dashboard** — KPIs, charts, attention queue, activity, active timer
+- **Projects** — list, Kanban board, members, settings, soft-delete
+- **Tasks** — detail view with comments, attachments, dependencies, time logs
+- **My Tasks** — tasks assigned to the current user
+- **Notes** — personal markdown files in a folder tree; editor with preview, export, trash
+- **Search** — global search across projects, tasks, and comments
+- **Trash** — restore items; permanent delete for admins
+- **User management** — users and roles (permission-gated)
+- **Real-time** — GraphQL subscriptions over SSE on board, comments, and notifications
+- **Command palette** — Cmd+K for navigation and recent projects
+
+## Prerequisites
+
+- Node.js 20+
+- Yarn
+- **Warc backend** running locally (see `../warc-backend/README.md`)
 
 ## Setup
 
-1. Copy the environment file:
+1. **Environment**
 
 ```bash
 cp .env.example .env
 ```
 
-Required variables:
-
-| Variable | Example |
-|----------|---------|
-| `VITE_GRAPHQL_BACKEND_URL` | `http://localhost:8081/graphql` |
-| `VITE_GRAPHQL_CODEGEN_URL` | `http://localhost:8081/graphql` |
+| Variable | Description |
+|----------|-------------|
+| `VITE_GRAPHQL_BACKEND_URL` | GraphQL HTTP endpoint (e.g. `http://localhost:8081/graphql`) |
+| `VITE_GRAPHQL_CODEGEN_URL` | Same URL, used by codegen |
 
 Subscriptions use SSE at the same host with `/graphql` replaced by `/graphql/stream`.
 
-2. Install and start (backend must be running first):
+2. **Install and run**
 
 ```bash
 yarn install
 yarn dev
 ```
 
-3. Regenerate GraphQL types after schema changes:
+App default: `http://localhost:5173` (Vite).
+
+3. **GraphQL types** (after backend schema changes)
 
 ```bash
-yarn compile   # requires backend up at VITE_GRAPHQL_CODEGEN_URL
+yarn compile
 ```
+
+Requires the backend to be up at `VITE_GRAPHQL_CODEGEN_URL`.
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `yarn dev` | Start Vite dev server |
+| `yarn build` | Production build |
+| `yarn preview` | Preview production build |
+| `yarn compile` | Regenerate GraphQL types from backend schema |
+| `yarn tsc -b` | Typecheck |
+| `yarn format` | Format/lint with Biome |
 
 ## Seeded logins
 
-Password: `password`. See [backend RBAC guide](../warc-backend/Agent_docs/RBAC-and-Roles-Guide.md) for the full roster.
+Use the backend seed users. **Password:** `password`
 
-| Email | Platform role |
-|-------|---------------|
-| `superadmin@example.com` | Super Admin |
-| `admin@example.com` | Admin |
-| `nimisha@`, `sai@`, `shiva@`, `chithra@` | Manager (can create projects) |
-| `raghav@` and other dev emails | Viewer |
+Examples: `superadmin@example.com`, `admin@example.com`, `raghav@example.com`.
 
 ## Routes
 
 | Path | Page |
 |------|------|
 | `/` | Dashboard |
-| `/projects` | Project list (+ create for Admin/Manager) |
+| `/projects` | Project list |
 | `/projects/:id` | Project board + settings |
 | `/projects/:id/tasks/:taskId` | Task detail |
 | `/my-tasks` | Assigned tasks |
+| `/notes` | Personal notes (explorer + markdown editor) |
 | `/search` | Global search |
-| `/trash` | Restore / admin-only permanent delete |
+| `/trash` | Deleted items |
 | `/user-management/members` | Users |
-| `/user-management/roles` | Roles (Admin+ with ROLE_MANAGE) |
+| `/user-management/roles` | Roles |
 | `/settings` | Settings |
 
-**Global:** Cmd+K command palette (navigation + recent projects).
+Auth routes (`/login`, `/signup`) render outside the main shell.
 
-## Features
-
-- **Auth:** Login, signup, JWT refresh, protected routes
-- **RBAC:** `AuthProvider.hasAllPermissions()`, project-scoped `useProjectPermissions`
-- **Phase 1:** Projects, Kanban board, tasks, members
-- **Phase 2:** Comments, attachments, dependencies, time logs, notifications, my-tasks
-- **Phase 3:** Trash, global search (debounced + skeleton), Cmd+K, GraphQL subscriptions over SSE
-- **Dashboard:** Personal + project-scoped KPIs, charts, attention queue, activity, timer — see [Dashboard guide](../warc-backend/Agent_docs/Dashboard-Guide.md)
-- **App shell:** Persistent sidebar/header via shared `AppShell` route; per-page title/breadcrumbs via `Layout` + `PageLayoutContext`
-- **Project delete:** Settings tab danger zone on `/projects/:id` (soft-delete to Trash, `PROJECT_DELETE` permission)
-
-## Real-time
-
-Apollo Client splits subscription operations to a custom SSE link (`src/utils/subscription-link.ts`) with Bearer auth. Wired on project board, task comments, and notification bell.
-
-## Project structure
+## Project layout
 
 ```
 src/
-├── components/       # AppShell, Layout, PageLayoutContext, DataTable, CommandPalette, ui/*
-├── routes/           # Page modules per route (protected routes nested under AppShell)
-├── hooks/            # useProjectPermissions, useDebouncedCallback, …
-├── graphql/          # Subscription documents
-└── utils/            # Apollo client, permissions, debounce
+├── components/     # AppShell, Layout, shared UI, CommandPalette
+├── routes/         # One folder per page (index.tsx + colocated queries)
+├── hooks/          # useProjectPermissions, debounce, etc.
+├── graphql/        # Subscription documents
+├── utils/          # Apollo client, permissions, helpers
+└── __generated__/  # GraphQL codegen output (do not edit by hand)
 ```
 
-**Routing:** Auth routes (`/login`, `/signup`) render standalone. All other routes share one `AppShell` instance (`src/routes/index.tsx`) so the sidebar does not remount on navigation. Each page wraps content in `Layout` to publish title, breadcrumbs, and header actions into context.
+**Routing:** Protected routes share a single `AppShell` (sidebar + header). Each page uses `Layout` to set breadcrumbs and title via `PageLayoutContext`.
 
-## Documentation
+**Real-time:** Apollo splits subscriptions to an SSE link (`src/utils/subscription-link.ts`) with Bearer auth.
 
-Backend docs (status, RBAC, phase plans): [../warc-backend/Agent_docs/README.md](../warc-backend/Agent_docs/README.md)
+## Backend
+
+The GraphQL API lives in the sibling repo **`warc-backend`**. Start it before `yarn dev` or `yarn compile`.

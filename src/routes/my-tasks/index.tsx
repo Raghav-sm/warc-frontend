@@ -13,7 +13,7 @@ import { PriorityBadge } from "@/components/PriorityBadge";
 import { SearchInput } from "@/components/SearchInput";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import Select from "@/primitives/select";
 import { PROJECTS_QUERY } from "@/routes/projects/projects-query";
 import { getGraphQLErrorMessage } from "@/utils/graphql-errors";
 import { MY_TASKS_QUERY } from "./my-tasks-query";
@@ -141,28 +141,24 @@ export default function MyTasksPage() {
             onSearch={(value) => setQueryState({ q: value.trim() || "", page: 1 })}
             placeholder="Search tasks…"
           />
-          <NativeSelect
-            className="w-48"
+          <Select
+            id="my-tasks-status-filter"
             value={queryState.status}
-            onChange={(e) => setQueryState({ status: e.target.value, page: 1 })}
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <NativeSelectOption key={opt.value || "all"} value={opt.value}>
-                {opt.label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-          <NativeSelect
-            className="w-48"
+            onChange={(value) => setQueryState({ status: value ?? "", page: 1 })}
+            options={STATUS_OPTIONS}
+            placeholder="All statuses"
+            searchable={false}
+            className="w-full min-w-0 sm:w-48"
+          />
+          <Select
+            id="my-tasks-project-filter"
             value={queryState.project}
-            onChange={(e) => setQueryState({ project: e.target.value, page: 1 })}
-          >
-            {projectOptions.map((opt) => (
-              <NativeSelectOption key={opt.value || "all"} value={opt.value}>
-                {opt.label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+            onChange={(value) => setQueryState({ project: value ?? "", page: 1 })}
+            options={projectOptions}
+            placeholder="All projects"
+            searchable={false}
+            className="w-full min-w-0 sm:w-48"
+          />
           {queryState.q || queryState.status || queryState.project ? (
             <Button variant="outline" onClick={() => setQueryState({ q: "", status: "", project: "", page: 1 })}>
               Clear filters

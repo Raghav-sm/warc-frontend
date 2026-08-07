@@ -9,6 +9,7 @@ import { usePageLayout } from "@/components/PageLayoutContext";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { cn } from "@/utils/classnames";
 
 import {
   Breadcrumb,
@@ -62,7 +63,12 @@ export default function AppShell() {
               <NotificationBell />
             </div>
           </header>
-          <div className={contentClassName ?? "p-4 px-8 w-full max-w-7xl md:mx-auto"}>
+          <div
+            className={cn(
+              "flex min-h-0 flex-1 flex-col min-w-0 overflow-y-auto",
+              contentClassName ?? "p-4 px-8 w-full max-w-7xl md:mx-auto",
+            )}
+          >
             {title || subtitle || headerActions ? (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div className="flex items-start gap-3 min-w-0">
@@ -84,7 +90,9 @@ export default function AppShell() {
                 {headerActions ? <div className="shrink-0 flex items-center justify-end">{headerActions}</div> : null}
               </div>
             ) : null}
-            <Outlet />
+            <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+              <Outlet />
+            </div>
           </div>
         </SidebarInset>
       </TooltipProvider>
